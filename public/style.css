@@ -1,0 +1,45 @@
+html, body {
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  background-color: #fff;
+  color: #333;
+}
+body {
+  font-family: system-ui, sans-serif;
+  box-sizing: border-box;
+  min-height: 100vh;
+  min-width: 100vw;
+  height: 100vh;
+  width: 100vw;
+}
+main.container {
+  min-width: 100vw;
+  min-height: calc(100vh - 56px);
+  padding: 32px 24px 24px 24px;
+  max-width: 100vw !important;
+}
+.navbar {
+  background-color: #800020 !important;
+  min-width: 100vw;
+  margin: 0;
+}
+.btn-main, .btn-outline-main {
+  background-color: #800020;
+  color: #fff;
+  border: 1px solid #800020;
+}
+.btn-outline-main {
+  background: #fff;
+  color: #800020;
+}
+.btn-main:hover, .btn-outline-main:hover {
+  background-color: #a52a2a;
+  color: #fff;
+  border: 1px solid #a52a2a;
+}
+.table th, .table td {
+  vertical-align: middle;
+}
