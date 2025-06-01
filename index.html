@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Parc Imprimantes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Page d'authentification -->
+    <div id="loginPage" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fas fa-print mb-3"></i>
+                <h2>Gestion Parc Imprimantes</h2>
+            </div>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Mot de passe</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Se connecter</button>
+            </form>
+            <div class="mt-3 small text-muted">
+                <strong>Comptes de test :</strong><br>
+                Admin: admin@entreprise.com / admin123<br>
+                Responsable: jean.dupont@entreprise.com / jean123<br>
+                Technicien: marie.martin@entreprise.com / marie123<br>
+                Utilisateur: paul.durand@entreprise.com / paul123
+            </div>
+        </div>
+    </div>
+
+    <!-- Application principale -->
+    <div id="appContainer" class="d-none">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-print"></i>
+                <span class="ms-2">Gestion Imprimantes</span>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="#" data-page="dashboard"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+                <li><a href="#" data-page="printers"><i class="fas fa-print"></i> Imprimantes</a></li>
+                <li><a href="#" data-page="tickets"><i class="fas fa-ticket-alt"></i> Tickets SAV</a></li>
+                <li><a href="#" data-page="inventory"><i class="fas fa-box"></i> Inventaire</a></li>
+                <li><a href="#" data-page="statistics"><i class="fas fa-chart-pie"></i> Statistiques</a></li>
+                <li id="usersMenuItem" class="d-none"><a href="#" data-page="users"><i class="fas fa-users"></i> Utilisateurs</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div id="currentUserName"></div>
+                    <div id="currentUserRole" class="small text-muted"></div>
+                </div>
+                <button id="logoutBtn" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </nav>
+
+        <!-- Contenu principal -->
+        <main class="main-content">
+            <!-- Dashboard -->
+            <div id="dashboardPage" class="page active">
+                <div class="page-header">
+                    <h1>Dashboard</h1>
+                    <small class="text-muted">Vue d'ensemble du parc d'imprimantes</small>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-3">
+                        <div class="stat-card stat-card-primary">
+                            <div class="stat-icon"><i class="fas fa-print"></i></div>
+                            <div class="stat-info">
+                                <h3 id="totalPrinters">0</h3>
+                                <p>Imprimantes</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card stat-card-warning">
+                            <div class="stat-icon"><i class="fas fa-ticket-alt"></i></div>
+                            <div class="stat-info">
+                                <h3 id="openTickets">0</h3>
+                                <p>Tickets ouverts</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card stat-card-success">
+                            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="stat-info">
+                                <h3 id="operationalPrinters">0</h3>
+                                <p>Opérationnelles</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card stat-card-danger">
+                            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="stat-info">
+                                <h3 id="lowStockItems">0</h3>
+                                <p>Stock faible</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-4 mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>État des imprimantes</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="printersStatusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Tickets par priorité</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="ticketsPriorityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestion des imprimantes -->
+            <div id="printersPage" class="page">
+                <div class="page-header">
+                    <h1>Gestion des Imprimantes</h1>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#printerModal">
+                        <i class="fas fa-plus"></i> Ajouter une imprimante
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>N° Série</th>
+                                        <th>Marque</th>
+                                        <th>Emplacement</th>
+                                        <th>Statut</th>
+                                        <th>Toner</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="printersTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestion des tickets -->
+            <div id="ticketsPage" class="page">
+                <div class="page-header">
+                    <h1>Tickets SAV</h1>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ticketModal">
+                        <i class="fas fa-plus"></i> Créer un ticket
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Titre</th>
+                                        <th>Imprimante</th>
+                                        <th>Priorité</th>
+                                        <th>Statut</th>
+                                        <th>Assigné à</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ticketsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestion de l'inventaire -->
+            <div id="inventoryPage" class="page">
+                <div class="page-header">
+                    <h1>Inventaire</h1>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#inventoryModal">
+                        <i class="fas fa-plus"></i> Ajouter un article
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Référence</th>
+                                        <th>Catégorie</th>
+                                        <th>Stock</th>
+                                        <th>Stock min.</th>
+                                        <th>Prix unitaire</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventoryTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Statistiques -->
+            <div id="statisticsPage" class="page">
+                <div class="page-header">
+                    <h1>Statistiques</h1>
+                    <small class="text-muted">Métriques détaillées du parc d'imprimantes</small>
+                </div>
+                
+                <!-- Statistiques d'interventions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tools"></i> Statistiques d'interventions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="totalInterventions">0</h4>
+                                    <p>Total interventions</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="avgResolutionTime">0h</h4>
+                                    <p>Temps moyen de résolution (MTTR)</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="resolutionRate">0%</h4>
+                                    <p>Taux de résolution</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="avgInterventionCost">0€</h4>
+                                    <p>Coût moyen intervention</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <canvas id="interventionsChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistiques des imprimantes -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-print"></i> Statistiques des imprimantes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="totalParkSize">0</h4>
+                                    <p>Total du parc</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="availabilityRate">0%</h4>
+                                    <p>Taux de disponibilité</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="mtbf">0j</h4>
+                                    <p>MTBF moyen</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="avgTonerLevel">0%</h4>
+                                    <p>Niveau toner moyen</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <canvas id="brandDistributionChart"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <canvas id="printerStatusDetailChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistiques des tickets -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-ticket-alt"></i> Statistiques des tickets</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="totalTickets">0</h4>
+                                    <p>Total tickets</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="openTicketsCount">0</h4>
+                                    <p>Tickets ouverts</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="avgResponseTime">0h</h4>
+                                    <p>Temps de réponse moyen</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="ticketsThisMonth">0</h4>
+                                    <p>Ce mois-ci</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <canvas id="ticketsByPriorityChart"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <canvas id="ticketsByStatusChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistiques de stock -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-box"></i> Statistiques de stock</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="totalStockItems">0</h4>
+                                    <p>Articles en stock</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="lowStockAlerts">0</h4>
+                                    <p>Alertes réapprovisionnement</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="totalStockValue">0€</h4>
+                                    <p>Valeur totale stock</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-item">
+                                    <h4 id="avgCostPerPage">0€</h4>
+                                    <p>Coût moyen par page</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <canvas id="stockByCategoryChart"></canvas>
+                            </div>
+                            <div class="col-md-6">
+                                <canvas id="stockLevelsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestion des utilisateurs -->
+            <div id="usersPage" class="page">
+                <div class="page-header">
+                    <h1>Gestion des Utilisateurs</h1>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal">
+                        <i class="fas fa-plus"></i> Ajouter un utilisateur
+                    </button>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Email</th>
+                                        <th>Rôle</th>
+                                        <th>Dernière connexion</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Modal Imprimante -->
+    <div class="modal fade" id="printerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajouter/Modifier Imprimante</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="printerForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="printerId">
+                        <div class="mb-3">
+                            <label for="printerName" class="form-label">Nom *</label>
+                            <input type="text" class="form-control" id="printerName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="printerSerial" class="form-label">Numéro de série *</label>
+                            <input type="text" class="form-control" id="printerSerial" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="printerIP" class="form-label">Adresse IP</label>
+                            <input type="text" class="form-control" id="printerIP">
+                        </div>
+                        <div class="mb-3">
+                            <label for="printerLocation" class="form-label">Emplacement</label>
+                            <input type="text" class="form-control" id="printerLocation">
+                        </div>
+                        <div class="mb-3">
+                            <label for="printerBrand" class="form-label">Marque</label>
+                            <input type="text" class="form-control" id="printerBrand">
+                        </div>
+                        <div class="mb-3">
+                            <label for="printerModel" class="form-label">Modèle</label>
+                            <input type="text" class="form-control" id="printerModel">
+                        </div>
+                        <div class="mb-3">
+                            <label for="printerStatus" class="form-label">Statut</label>
+                            <select class="form-control" id="printerStatus">
+                                <option value="Opérationnel">Opérationnel</option>
+                                <option value="Maintenance requise">Maintenance requise</option>
+                                <option value="Hors service">Hors service</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ticket -->
+    <div class="modal fade" id="ticketModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Créer/Modifier Ticket</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="ticketForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="ticketId">
+                        <div class="mb-3">
+                            <label for="ticketTitle" class="form-label">Titre *</label>
+                            <input type="text" class="form-control" id="ticketTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ticketDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="ticketDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ticketPrinter" class="form-label">Imprimante</label>
+                            <select class="form-control" id="ticketPrinter">
+                                <option value="">Sélectionner une imprimante</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ticketPriority" class="form-label">Priorité</label>
+                            <select class="form-control" id="ticketPriority">
+                                <option value="Basse">Basse</option>
+                                <option value="Moyenne">Moyenne</option>
+                                <option value="Haute">Haute</option>
+                                <option value="Critique">Critique</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ticketCategory" class="form-label">Catégorie</label>
+                            <select class="form-control" id="ticketCategory">
+                                <option value="Maintenance corrective">Maintenance corrective</option>
+                                <option value="Maintenance préventive">Maintenance préventive</option>
+                                <option value="Consommables">Consommables</option>
+                                <option value="Réseau">Réseau</option>
+                                <option value="Autre">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Inventaire -->
+    <div class="modal fade" id="inventoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajouter/Modifier Article</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="inventoryForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="inventoryId">
+                        <div class="mb-3">
+                            <label for="inventoryName" class="form-label">Nom *</label>
+                            <input type="text" class="form-control" id="inventoryName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="inventoryReference" class="form-label">Référence</label>
+                            <input type="text" class="form-control" id="inventoryReference">
+                        </div>
+                        <div class="mb-3">
+                            <label for="inventoryCategory" class="form-label">Catégorie</label>
+                            <select class="form-control" id="inventoryCategory">
+                                <option value="Toner">Toner</option>
+                                <option value="Encre">Encre</option>
+                                <option value="Papier">Papier</option>
+                                <option value="Pièce détachée">Pièce détachée</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="inventoryStock" class="form-label">Stock</label>
+                            <input type="number" class="form-control" id="inventoryStock" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="inventoryMinStock" class="form-label">Stock minimum</label>
+                            <input type="number" class="form-control" id="inventoryMinStock" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label for="inventoryPrice" class="form-label">Prix unitaire (€)</label>
+                            <input type="number" step="0.01" class="form-control" id="inventoryPrice" min="0">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Utilisateur -->
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajouter/Modifier Utilisateur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="userForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="userId">
+                        <div class="mb-3">
+                            <label for="userName" class="form-label">Nom complet *</label>
+                            <input type="text" class="form-control" id="userName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userEmail" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="userEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userRole" class="form-label">Rôle</label>
+                            <select class="form-control" id="userRole">
+                                <option value="Utilisateur">Utilisateur</option>
+                                <option value="Technicien">Technicien</option>
+                                <option value="Responsable">Responsable</option>
+                                <option value="Admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userPassword" class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control" id="userPassword">
+                            <div class="form-text">Laisser vide pour conserver le mot de passe actuel</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
