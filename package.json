@@ -1,16 +1,23 @@
 {
-  "name": "imprimante-parc-manager-node",
-  "version": "1.0.0",
-  "description": "Gestion d'un parc d'imprimantes Node.js + JSON, sans moteur de template",
+  "name": "glitch-hello-node",
+  "version": "0.1.0",
+  "description": "A simple Node app built on fastify, instantly up and running. Built to be remixed on Glitch.com.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "bcrypt": "^5.1.0",
-    "body-parser": "^1.20.2",
-    "express": "^4.19.2",
-    "express-session": "^1.17.3",
-    "uuid": "^9.0.0"
-  }
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": "14.x"
+  },
+  "repository": {
+    "url": "https://glitch.com/edit/#!/glitch-hello-node"
+  },
+  "license": "MIT",
+  "keywords": [
+    "node",
+    "glitch"
+  ]
 }

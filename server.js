@@ -1,51 +1,88 @@
-// ...dans app.get("/dashboard", ...)
-res.send(layout("Imprimantes", `
-  <h2>Gestion du parc d'imprimantes</h2>
-  <form class="mb-3 d-flex" method="get">
-    <input name="filter" class="form-control me-2" placeholder="Rechercher..." value="${filter}">
-    <button class="btn btn-main">Filtrer</button>
-  </form>
-  <a href="/printer/new" class="btn btn-main mb-3">Ajouter une imprimante</a>
-  <div style="overflow-x:auto;">
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>Marque</th><th>Modèle</th><th>Numéro de série</th><th>Type</th>
-        <th>IP</th><th>MAC</th><th>Emplacement</th><th>Utilisateur</th>
-        <th>État</th><th>Date d’installation</th><th>Dernière maintenance</th>
-        <th>Commentaires</th><th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${printers.map(p => `
-      <tr>
-        <td>${p.Marque || ""}</td>
-        <td>${p["Modèle"] || ""}</td>
-        <td>${p["Numéro de série"] || ""}</td>
-        <td>${p.Type || ""}</td>
-        <td>${p.IP || ""}</td>
-        <td>${p.MAC || ""}</td>
-        <td>${p.Emplacement || ""}</td>
-        <td>${p.Utilisateur || ""}</td>
-        <td>${p.État || ""}</td>
-        <td>${p["Date d’installation"] || ""}</td>
-        <td>${p["Dernière maintenance"] || ""}</td>
-        <td>${p.Commentaires || ""}</td>
-        <td>
-          ${
-            req.session.user.role === "admin"
-              ? `
-                <a href="/printer/edit/${p.id}" class="btn btn-sm btn-outline-main me-1">Éditer</a>
-                <form method="POST" action="/printer/delete/${p.id}" style="display:inline;" onsubmit="return confirm('Supprimer cette imprimante ?');">
-                  <button class="btn btn-sm btn-outline-danger">Supprimer</button>
-                </form>
-              `
-              : `<span class="text-muted">Aucune action</span>`
-          }
-        </td>
-      </tr>
-      `).join("")}
-    </tbody>
-  </table>
-  </div>
-`, req.session.user));
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+const DB_PATH = path.join(__dirname, 'db.json');
+
+app.use(express.json());
+app.use(express.static('public'));
+
+// Helper : lire et écrire la base JSON
+function readDb() {
+  return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+}
+function writeDb(db) {
+  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), 'utf8');
+}
+
+// AUTH simple (POST /api/login)
+app.post('/api/login', (req, res) => {
+  const { email, password } = req.body;
+  const db = readDb();
+  const user = db.users.find(u => u.email === email && u.password === password);
+  if (user) {
+    res.json({ success: true, user: { id: user.id, name: user.name, role: user.role, email: user.email } });
+  } else {
+    res.status(401).json({ success: false, message: 'Identifiants invalides' });
+  }
+});
+
+// CRUD endpoints génériques pour chaque collection
+['users', 'printers', 'tickets', 'inventory', 'interventions'].forEach(collection => {
+  // GET ALL
+  app.get(`/api/${collection}`, (req, res) => {
+    const db = readDb();
+    res.json(db[collection] || []);
+  });
+
+  // GET by ID
+  app.get(`/api/${collection}/:id`, (req, res) => {
+    const db = readDb();
+    const item = (db[collection] || []).find(i => i.id == req.params.id);
+    if (item) res.json(item);
+    else res.status(404).end();
+  });
+
+  // CREATE
+  app.post(`/api/${collection}`, (req, res) => {
+    const db = readDb();
+    const items = db[collection] || [];
+    const newId = items.length ? Math.max(...items.map(i => i.id)) + 1 : 1;
+    const newItem = { ...req.body, id: newId };
+    items.push(newItem);
+    db[collection] = items;
+    writeDb(db);
+    res.status(201).json(newItem);
+  });
+
+  // UPDATE
+  app.put(`/api/${collection}/:id`, (req, res) => {
+    const db = readDb();
+    let items = db[collection] || [];
+    const idx = items.findIndex(i => i.id == req.params.id);
+    if (idx === -1) return res.status(404).end();
+    items[idx] = { ...items[idx], ...req.body, id: Number(req.params.id) };
+    db[collection] = items;
+    writeDb(db);
+    res.json(items[idx]);
+  });
+
+  // DELETE
+  app.delete(`/api/${collection}/:id`, (req, res) => {
+    const db = readDb();
+    let items = db[collection] || [];
+    const idx = items.findIndex(i => i.id == req.params.id);
+    if (idx === -1) return res.status(404).end();
+    const deleted = items.splice(idx, 1)[0];
+    db[collection] = items;
+    writeDb(db);
+    res.json(deleted);
+  });
+});
+
+// Démarrer le serveur
+app.listen(PORT, () => {
+  console.log(`Serveur Node.js démarré sur le port ${PORT}`);
+});

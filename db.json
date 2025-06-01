@@ -1,4 +1,87 @@
 {
-  "users": [],
-  "printers": []
+  "users": [
+    {
+      "id": 1,
+      "name": "Admin Principal",
+      "email": "admin@entreprise.com",
+      "role": "Admin",
+      "password": "admin123",
+      "lastLogin": "2024-12-01T10:30:00Z"
+    },
+    {
+      "name": "Tony",
+      "email": "dominguez.anthony@gmail.com",
+      "role": "Utilisateur",
+      "password": "test",
+      "lastLogin": "2025-06-01T17:32:41.441Z",
+      "id": 2
+    }
+  ],
+  "printers": [
+    {
+      "name": "CHATEAU HAUT BERGEY",
+      "serialNumber": "X576006621",
+      "ipAddress": "192.168.1.30",
+      "location": "BUREAU",
+      "brand": "EPSON",
+      "model": "C579",
+      "status": "Opérationnel",
+      "tonerLevel": 65,
+      "pageCount": 9209,
+      "lastMaintenance": "2025-06-01",
+      "id": 1
+    },
+    {
+      "name": "KING KONG ARCHITECTES",
+      "serialNumber": "XAUV001375",
+      "ipAddress": "",
+      "location": "SERVICE REPRO",
+      "brand": "EPSON",
+      "model": "AM-C4000",
+      "status": "Opérationnel",
+      "tonerLevel": 98,
+      "pageCount": 18878,
+      "lastMaintenance": "2025-06-01",
+      "id": 2
+    }
+  ],
+  "tickets": [
+    {
+      "title": "[CHATEAU HAUT BERGEY] ",
+      "description": "BOURRAGE PAPIER",
+      "printerSerialNumber": "X576006621",
+      "priority": "Moyenne",
+      "category": "Maintenance corrective",
+      "assignedTo": "Tony",
+      "status": "Ouvert",
+      "createdBy": "Admin Principal",
+      "createdAt": "2025-06-01T20:46:01.011Z",
+      "id": 1
+    },
+    {
+      "title": "[KING KONG ARCHITECTES] ",
+      "description": "",
+      "printerSerialNumber": "XAUV001375",
+      "priority": "Critique",
+      "category": "Maintenance corrective",
+      "assignedTo": "Tony",
+      "status": "En cours",
+      "createdBy": "Admin Principal",
+      "createdAt": "2025-06-01T20:50:28.529Z",
+      "id": 2
+    }
+  ],
+  "inventory": [
+    {
+      "name": "test",
+      "reference": "test",
+      "category": "Toner",
+      "stock": 10,
+      "minStock": 5,
+      "unitPrice": 50,
+      "supplier": "Fournisseur par défaut",
+      "id": 1
+    }
+  ],
+  "interventions": []
 }
